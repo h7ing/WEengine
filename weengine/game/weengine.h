@@ -9,5 +9,6 @@
 #include "weutil.h"
 #include "weworld.h"
 #include "wescene.h"
+#include "werenderer.h"
 
 #endif

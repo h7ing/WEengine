@@ -17,16 +17,13 @@
 
 //---
 
-// todo: refactor to window struct
-static SDL_Window* window = NULL;
+extern struct WEworld *we_world;
+
+static SDL_Window *the_window = NULL;
 static int window_flags = SDL_WINDOW_OPENGL;
 
 static void we_init_window();
 static void we_destroy_window();
-
-static void we_init_opengl();
-
-static void we_render_opengl();
 
 
 void we_init() {
@@ -35,11 +32,8 @@ void we_init() {
 
     we_init_window();
 
-    we_init_opengl();
-
     WEworld_init(we_world);
-
-    WEscene_load_dummy(we_world);
+    we_world->the_window = the_window;
 }
 
 void we_startgame() {
@@ -62,7 +56,7 @@ void we_init_window() {
         abort();
     }
 
-    window = SDL_CreateWindow("hoka", 800, 600, window_flags);
+    the_window = SDL_CreateWindow("hoka", 800, 600, window_flags);
 
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -70,7 +64,7 @@ void we_init_window() {
     // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     // SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // mac
 
-    SDL_GLContext context = SDL_GL_CreateContext(window);
+    SDL_GLContext context = SDL_GL_CreateContext(the_window);
 
     if (context == NULL) {
         we_log("Could not create SDL context: %s\n", SDL_GetError());
@@ -81,45 +75,12 @@ void we_init_window() {
 }
 
 void we_destroy_window() {
-    SDL_DestroyWindow(window);
-}
-
-void we_init_opengl() {
-    we_log("init opengl begin.\n");
-
-    const GLubyte* glversion = glGetString(GL_VERSION);
-    we_log("opengl version:%s\n", glversion);
-
-    glViewport(0, 0, 800, 600);
-
-    glewExperimental = GL_TRUE;
-
-	GLenum glewError = glewInit();
-
-	if (glewError != GLEW_OK) {
-		abort();
-	}
-
-	we_log("glew version: %s\n", glewGetString(GLEW_VERSION));
-
-	int the_glmax_vertex_attribs;
-	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &the_glmax_vertex_attribs);
-
-	we_log("gl max vertex attribs:%d\n", the_glmax_vertex_attribs);
-
-
-	glEnable(GL_DEPTH_TEST);
-
-    we_log("init opengl end.\n");
+    SDL_DestroyWindow(the_window);
 }
 
 void we_mainloop() {
     SDL_Event event;
     int running = 1;
-    int wireframemode = 0;
-    int drawmode = 1;
-
-
 
     while (running) {
 
@@ -128,12 +89,12 @@ void we_mainloop() {
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_EVENT_KEY_DOWN:
-                // if (event.key.keysym.sym == SDLK_w) {
-                //     wireframemode = !wireframemode;
-                //     hegl_toggle_wireframe(wireframemode);
-                // }
+                if (event.key.keysym.sym == SDLK_w) {
+                    if (event.key.keysym.mod == SDL_KMOD_LSHIFT) {
+                        WErenderer_toggle_wireframe(we_world->the_renderer);
+                    }
+                }
                 // else if (event.key.keysym.sym == SDLK_1) {
-                //     drawmode = 1;
                 //     hegl_prepare_triangle();
                 // }
                 break;
@@ -148,16 +109,11 @@ void we_mainloop() {
             }
         }
 
-        we_render_opengl();
+        WErenderer_draw(we_world->the_renderer);
 
-        SDL_GL_SwapWindow(window);
+        SDL_GL_SwapWindow(the_window);
 
         // frame end
     }
-}
-
-void we_render_opengl() {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT); // use the clear color
 }
 

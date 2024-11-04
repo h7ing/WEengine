@@ -3,8 +3,6 @@
 
 #include "weid.h"
 
-struct WEcomponent;
-
 struct WErefcount {
 	int count;
 };
@@ -12,20 +10,11 @@ struct WErefcount {
 struct WEobject {
 	struct WEid id;
 	struct WErefcount ref;
-
-	struct WEcomponent *components;
 };
 
 struct WEobject_list {
 	struct WEobject *item;
 	struct WEobject_list *next;
-};
-
-struct WEcomponent {
-	const char *name;
-	void *body;
-	struct WEobject *owner;
-	struct WEcomponent *next;
 };
 
 struct WEobject *WEobject_new();

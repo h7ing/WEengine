@@ -1,10 +1,6 @@
 #include "weobject.h"
 #include "weutil.h"
 
-static void WEcomponent_clear(struct WEcomponent *cs) {
-	
-}
-
 struct WEobject *WEobject_new() {
 	struct WEobject *obj = calloc(1, sizeof(*obj));
 	obj->ref.count = 1;
@@ -12,15 +8,6 @@ struct WEobject *WEobject_new() {
 }
 
 static void WEobject_clear(struct WEobject *obj) {
-	WEcomponent_clear(obj->components);
-
-	struct WEcomponent *cs = obj->components;
-	while (cs) {
-		struct WEcomponent *c = cs->next;
-		free(cs);
-		cs = c;
-	}
-	obj->components = NULL;
 }
 
 void WEobject_list_clear(struct WEobject_list *objs) {
