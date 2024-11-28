@@ -16,8 +16,10 @@ struct WEworld *we_get_the_world() {
 }
 
 
-void WEworld_init(struct WEworld *w) {
+void WEworld_init(struct WEworld *w, struct SDL_Window *window) {
 	memset(w, 0, sizeof(*w));
+
+	w->the_window = window;
 
 	// w->objects = calloc(1, sizeof(*w->objects));
 
@@ -38,5 +40,52 @@ void WEworld_clear(struct WEworld *w) {
 }
 
 void WEworld_get_window_size(struct WEworld *w, int *width, int *height) {
-	SDL_GetWindowSize(w->the_window, width, height);
+	SDL_GetWindowSizeInPixels(w->the_window, width, height);
+}
+
+void WEworld_execute_tasks(struct WEworld *w) {
+	struct WEtask_head *task = w->tasks;
+	struct WEtask_head *prevtask = task;
+
+	while (task) {
+		int result = (task->fn)(w);
+		if (result) {
+			if (prevtask != task) {
+				prevtask->next = task->next;
+			} else {
+				// 表头
+				prevtask = task->next;
+				w->tasks = prevtask;
+			}
+
+			free(task);
+
+			if (prevtask)
+				task = prevtask->next;
+			else
+				task = NULL;
+		} else {
+			prevtask = task;
+			task = task->next;
+		}
+	}
+}
+
+void WEworld_append_task(struct WEworld *w, WEtask_t task) {
+
+	struct WEtask_head *item = malloc(sizeof(*item));
+	item->fn = task;
+	item->next = NULL;
+
+	struct WEtask_head *tail = w->tasks;
+
+	if (!tail) {
+		w->tasks = item;
+		return;
+	}
+
+	while (tail->next) {
+		tail = tail->next;
+	}
+	tail->next = item;
 }

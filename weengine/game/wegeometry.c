@@ -10,7 +10,9 @@ struct WEgeometry *WEgeometry_new() {
 	return geo;
 }
 
-void WEgeometry_delete(struct WEGeometry *geo) {
+void WEgeometry_delete(struct WEgeometry *geo) {
+	// todo: free nodes
+	free(geo->meshes);
 	free(geo);
 }
 
@@ -51,39 +53,49 @@ void WEgeometry_init_gltf(struct WEgeometry *geo, struct cgltf_data *d) {
 		struct cgltf_mesh *meshdata = &(d->meshes[i]);
 		struct WEmesh *mesh = &(geo->meshes[i]);
 
-		/* todo: copy meshes */
+		WEmesh_init_gltf(mesh, d, meshdata);
 
 		WEhashmap_add(meshmap, meshdata, mesh);
 	}
 
+	// todo: 解析materials
+	// d->materials
 
-	for (int i = 0; i < d->scene->nodes_count; i++) {
-		cgltf_node *n = d->scene->nodes[i];
+	// An additional root-level property, scene (note singular), identifies which of the scenes in the array SHOULD be displayed at load time.
+	// When scene is undefined, client implementations MAY delay rendering until a particular scene is requested.
+	// A glTF asset that does not contain any scenes SHOULD be treated as a library of individual entities such as materials or meshes.
 
-		if (!n->parent) {
-			/* todo: parse from root node */
-			/* 从根节点开始解析 */
+	// mark: 先只支持一个场景，多个，则先显示第一个
+	if (d->scenes_count > 0) {
+		struct cgltf_scene *scene = &(d->scenes[0]);
+		for (int i = 0; i < scene->nodes_count; i++) {
+			cgltf_node *n = scene->nodes[i];
 
-			/* todo: 改进节点列表结构: geometrynodelist_add() or create()
-			 */
+			if (!n->parent) {
+				/* 从根节点开始解析 */
 
-			struct WEgeometrynode *geonode = calloc(1, sizeof(*geonode));
+				/* todo: 改进节点列表结构: geometrynodelist_add() or create()
+				*/
 
-			if (!geo->nodes) {
-				geo->nodes = geonode;
-			} else {
-				struct WEgeometrynode *prev = geo->nodes;
-				while (prev->next) {
-					prev = prev->next;
+				struct WEgeometrynode *geonode = calloc(1, sizeof(*geonode));
+
+				if (!geo->nodes) {
+					geo->nodes = geonode;
+				} else {
+					struct WEgeometrynode *prev = geo->nodes;
+					while (prev->next) {
+						prev = prev->next;
+					}
+
+					prev->next = geonode;
+					geonode->prev = prev;
 				}
 
-				prev->next = geonode;
-				geonode->prev = prev;
+				WEgeometrynode_init_gltf(geonode, geo, n, meshmap);
 			}
-
-			WEgeometrynode_init_gltf(geonode, geo, n, meshmap);
 		}
 	}
+
 
 	WEhashmap_delete(meshmap);
 }
@@ -92,7 +104,7 @@ void WEgeometrynode_init_gltf(struct WEgeometrynode *geonode, struct WEgeometry 
 
 	/* node的transform可能用trs向量表示，也可能用matrix表示 */
 	if (d->has_matrix) {
-		/* 都是column major，直接拷贝 */
+		/* todo: fix mat4 copy */
 		glm_mat4_copy(d->matrix, geonode->transform.matrix);
 
 		vec4 t;
@@ -105,17 +117,23 @@ void WEgeometrynode_init_gltf(struct WEgeometrynode *geonode, struct WEgeometry 
 		glm_mat4_quat(r, geonode->transform.rotation);
 
 	} else {
-		if (d->has_translation) {
+		if (d->has_translation)
 			glm_vec3_copy(d->translation, geonode->transform.position);
-		}
+		else
+			glm_vec3_zero(geonode->transform.position);
 
-		if (d->has_rotation) {
+		if (d->has_rotation)
 			glm_quat_copy(d->rotation, geonode->transform.rotation);
-		}
+		else
+			glm_quat_identity(geonode->transform.rotation);
 
-		if (d->has_scale) {
+		if (d->has_scale)
 			glm_vec3_copy(d->scale, geonode->transform.scale);
-		}
+		else
+			glm_vec3_one(geonode->transform.scale);
+
+		glm_mat4_identity(geonode->transform.matrix);
+		WEtransform_compose_matrix(&geonode->transform);
 	}
 
 

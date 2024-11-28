@@ -6,6 +6,7 @@
 #include "weutil.h"
 #include "wemesh.h"
 #include "wegeometry.h"
+#include "wescene.h"
 
 void WEscene_load_dummy(struct WEworld *w) {
 
@@ -43,7 +44,8 @@ void WEscene_load_dummy(struct WEworld *w) {
 	/* test geometry */
 	do {
 
-		struct WEgeometry *geo = WEgeometry_loadfromfile("models/triangle.gltf");
+		char *filename = "models/pyramid.glb";
+		struct WEgeometry *geo = WEgeometry_loadfromfile(filename);
 		if (geo) {
 
 			struct WEnode *n = WEnode_new();

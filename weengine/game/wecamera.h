@@ -6,6 +6,8 @@
 
 struct WEnode;
 
+struct WEworld;
+
 struct WEcamera {
 	struct WEcomponent com;
 	struct WEnode *node;
@@ -18,6 +20,16 @@ struct WEcamera {
 
 	mat4 view;
 	mat4 projection;
+
+
+	mat4 persp;
+	mat4 ortho;
+
+	float animprogress;
+
+
+	int projection_mode; // 0-persp 1-ortho
+	int target_projmode;
 };
 
 struct WEcamera *WEcamera_get(struct WEnode *n);
@@ -25,5 +37,8 @@ struct WEcamera *WEcamera_get(struct WEnode *n);
 struct WEcamera *WEcamera_new();
 
 void WEcamera_init_lens_normal_35(struct WEcamera *c);
+
+int WEcamera_anim_switch_projection(struct WEworld *w);
+void WEcamera_set_projection_anim(struct WEcamera *c, int toproj);
 
 #endif

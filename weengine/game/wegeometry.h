@@ -4,6 +4,7 @@
 #include "wetransform.h"
 
 struct cgltf_data;
+struct cgltf_node;
 
 struct WEnode;
 struct WEmesh;
@@ -30,7 +31,7 @@ struct WEgeometry {
 
 struct WEgeometry *WEgeometry_new();
 
-void WEgeometry_delete(struct WEGeometry *geo);
+void WEgeometry_delete(struct WEgeometry *geo);
 
 struct WEgeometry *WEgeometry_loadfromfile(char *path);
 

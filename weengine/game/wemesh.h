@@ -5,6 +5,7 @@
 #include "wecomponent.h"
 
 struct cgltf_data;
+struct cgltf_mesh;
 
 struct WEvertex {
 	vec3 position;
@@ -12,25 +13,32 @@ struct WEvertex {
 	vec2 texcoord;
 };
 
-struct WEmesh {
-	struct WEcomponent com;
-	struct WEnode *node;
+struct WEmaterial;
 
+struct WEmeshprimitive {
 	struct WEvertex *vertices;
 	size_t vertices_cnt;
 
 	int *indices;
 	size_t indices_cnt;
 
-	unsigned int shader;
+	struct WEmaterial *material;
 
 	unsigned int vao;
 	unsigned int vbo;
 	unsigned int ebo;
 };
 
-struct WEmesh *WEmesh_new();
+struct WEmesh {
+	struct WEcomponent com;
+	struct WEnode *node;
 
-void WEmesh_init_gltf(struct WEmesh *m, struct cgltf_data *d);
+	struct WEmeshprimitive *primitives;
+	int primitives_cnt;
+};
+
+void WEmesh_init_gltf(struct WEmesh *dest, struct cgltf_data *d, struct cgltf_mesh *m);
+
+void WEmesh_build_renderdata(struct WEmeshprimitive *meshprim);
 
 #endif

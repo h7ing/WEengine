@@ -10,4 +10,6 @@ struct WEtransform {
 	mat4 matrix;
 };
 
+void WEtransform_compose_matrix(struct WEtransform *t);
+
 #endif
